@@ -1161,7 +1161,7 @@ plt.show()
 
 ## КОРИСНІ ПОСИЛАННЯ
 
-- **Репозиторій курсу:** [github.com/goitacademy/DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP](https://github.com/goitacademy/DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP)
+- **Репозиторій курсу:** [github.com/goitacademy/DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP](https://github.com/goitacademy/DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP) — директорія `DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP-main/` у цьому репо є копією цього джерела
 - **Ноутбук лекції:** [Module_3_Lecture_5_Class.ipynb](https://github.com/goitacademy/DEEP-LEARNING-FOR-COMPUTER-VISION-AND-NLP/blob/main/notebooks/Module_3_Lecture_5_Class.ipynb)
 - **Albumentations:** [github.com/albumentations-team/albumentations](https://github.com/albumentations-team/albumentations)
 - **RGB (Вікіпедія):** [uk.wikipedia.org/wiki/RGB](https://uk.wikipedia.org/wiki/RGB)
