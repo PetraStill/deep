@@ -4,17 +4,19 @@
 >
 > **Альтернатива:** локальний Jupyter Notebook. Встанови: `pip install jupyterlab torch numpy pandas scikit-learn matplotlib opencv-python pillow torchvision tqdm`, запусти `jupyter lab`. Документація: [jupyter.org/install](https://jupyter.org/install)
 
-### Підготовка даних (виконати перед усім іншим)
+---
 
-**Для Google Colab** — клонуємо репозиторій з даними:
+## КРОК 0. ПІДГОТОВКА СЕРЕДОВИЩА (виконати перед усім іншим)
 
 ```python
-# Клонуємо репозиторій та переходимо в директорію теми 5
+# ====== Для Google Colab ======
 !git clone https://github.com/PetraStill/deep.git
 %cd deep/тема_5
-```
 
-**Для локального запуску** — просто відкрийте notebook з директорії `тема_5/`.
+# ====== Для локального запуску ======
+# Відкрийте notebook з директорії тема_5/ та виконайте:
+# !pip install opencv-python pillow torchvision tqdm
+```
 
 ---
 
@@ -201,16 +203,10 @@ B = 192
 
 ## ЧАСТИНА 2. ЗНАЙОМСТВО З ДАНИМИ
 
-### Крок 1. Встановлення та імпорт бібліотек
+### Крок 1. Імпорт бібліотек
 
-**Що робимо:** встановлюємо OpenCV і підключаємо всі інструменти для роботи.
+**Що робимо:** підключаємо всі інструменти для роботи.
 
-```bash
-pip install opencv-python
-```
-
-> **На Google Colab** цей крок можна пропустити — `opencv-python` та всі інші бібліотеки з цього конспекту (`torch`, `torchvision`, `numpy`, `matplotlib`, `pandas`, `sklearn`, `PIL`, `tqdm`) вже встановлені за замовчуванням.
->
 > **Порада:** якщо бібліотека не встановлена, знайдіть її на [PyPI](https://pypi.org/) — це офіційне сховище пакетів Python. Пошук: `назва бібліотеки pypi`.
 
 ```python
