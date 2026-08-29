@@ -1,0 +1,5 @@
+# Original full-resolution dataset (~1.1 GB) — use data_64/ instead
+тема_5/data/
+
+# macOS
+.DS_Store
