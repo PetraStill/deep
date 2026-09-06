@@ -2689,7 +2689,23 @@ optimizer_ft = optim.Adam(model_ft.parameters(),     # Оптимізуємо В
 
 > **Зверніть увагу:** `model_ft.parameters()` означає, що оптимізуються **всі** параметри моделі — і згорткові шари, і класифікатор.
 
-**Крок 8.5. Тренування:**
+**Крок 8.5. Scheduler (планувальник learning rate):**
+
+```python
+exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft,   # Планувальник для оптимізатора
+                                        step_size=7,    # Кожні 7 епох —
+                                        gamma=0.1)      # — множимо lr на 0.1 (зменшуємо в 10 разів)
+```
+
+> **Очікуваний результат:** визначено scheduler (без виводу). Кожні 7 епох learning rate автоматично зменшується: `1e-05 → 1e-06 → ...` — це допомагає моделі спочатку швидко вчитися, а потім «тонко налаштовуватися».
+
+| Елемент       | Значення                              | Деталі                                              |
+| ------------- | ------------------------------------- | --------------------------------------------------- |
+| `StepLR`      | Тип scheduler                         | Зменшує lr через фіксовані інтервали                |
+| `step_size=7` | Інтервал                              | Кожні 7 епох                                        |
+| `gamma=0.1`   | Множник                               | lr × 0.1 (зменшення в 10 разів)                    |
+
+**Крок 8.6. Тренування:**
 
 ```python
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
@@ -2772,10 +2788,14 @@ optimizer_conv = optim.Adam(
 
 > **Ключова відмінність:** в оптимізатор передаємо `model_conv.fc.parameters()` — **тільки** параметри повнозв'язного шару, а не `model_conv.parameters()` (всі параметри).
 
-**Крок 9.5. Тренування:**
+**Крок 9.5. Scheduler та тренування:**
 
 ```python
-model_conv = train_model(model_conv, criterion, optimizer_conv,
+exp_lr_scheduler_conv = lr_scheduler.StepLR(optimizer_conv,  # Планувальник для FC-оптимізатора
+                                             step_size=7,     # Кожні 7 епох —
+                                             gamma=0.1)       # — множимо lr на 0.1
+
+model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler_conv,
                          num_epochs=5)  # Тренуємо 5 епох (тільки FC-шар)
 ```
 
