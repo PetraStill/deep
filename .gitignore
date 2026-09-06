@@ -1,5 +1,8 @@
 # Original full-resolution dataset (~1.1 GB) — use data_64/ instead
 тема_5/data/
 
+# Домашнє завдання (здається окремо)
+тема_6/hw_intel_image_classification.ipynb
+
 # macOS
 .DS_Store
