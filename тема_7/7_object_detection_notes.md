@@ -1867,7 +1867,8 @@ import cv2             # OpenCV — зчитування, запис та обр
 
 from ultralytics import YOLO  # Клас для завантаження і тренування YOLO-моделей
 
-%matplotlib inline  # Відображати графіки inline (у Jupyter)
+# Відображати графіки inline (у Jupyter/Colab)
+%matplotlib inline
 
 # Вимикаємо логування Weights & Biases (якщо wandb встановлено)
 !wandb disabled
@@ -1922,7 +1923,7 @@ from ultralytics import YOLO  # Клас для завантаження і тр
 **Структура директорій:**
 
 ```
-data/Module_4_Lecture_1_Construction_Site_Safety/
+тема_7/
 ├── train/
 │   ├── images/    ← 2605 зображень для навчання
 │   └── labels/    ← анотації у форматі YOLO
@@ -1976,7 +1977,7 @@ class CFG:
     LABEL_SMOOTHING = 0.0  # Label smoothing: розм'якшення міток (0.0 — вимкнено)
     
     # --- Шляхи ---
-    CUSTOM_DATASET_DIR = './data/Module_4_Lecture_1_Construction_Site_Safety/'
+    CUSTOM_DATASET_DIR = './тема_7/'
     OUTPUT_DIR = './'  # Куди зберігати data.yaml і результати тренування
 ```
 
@@ -2052,9 +2053,9 @@ names:
 - machinery
 - vehicle
 nc: 10
-test: ./data/Module_4_Lecture_1_Construction_Site_Safety/test
-train: ./data/Module_4_Lecture_1_Construction_Site_Safety/train
-val: ./data/Module_4_Lecture_1_Construction_Site_Safety/valid
+test: ./тема_7/test
+train: ./тема_7/train
+val: ./тема_7/valid
 ```
 
 **Як інтерпретувати:** `nc: 10` — модель навчатиметься розрізняти 10 класів. Шляхи `train/val/test` вказують, де шукати зображення і анотації.
