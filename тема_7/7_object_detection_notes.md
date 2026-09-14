@@ -417,7 +417,7 @@ CNN класифікує кожен proposal
 
 1. Відкинути всі рамки з оцінкою впевненості (confidence score) нижче порогу (наприклад, 0.5)
 2. Серед рамок, що залишились для одного класу, обрати **найвпевненішу**
-3. Порівняти її з усіма іншими: якщо IoU > 0.5 — вважати їх дублікатами і видалити
+3. Порівняти її з усіма іншими: якщо IoU > порогу (часто 0.5) — вважати їх дублікатами і видалити
 4. Повторити з наступною за впевненістю рамкою
 
 **Покроковий приклад:**
@@ -480,12 +480,12 @@ IoU = площа перетину / площа об'єднання
 | ------------ | --------------------------------------------- |
 | = 0          | Рамки не перетинаються взагалі                |
 | = 0.3        | Невелике перекриття                           |
-| = 0.5        | Поріг «правильного» виявлення (True Positive) |
+| = 0.5        | Поширений приклад порогу для True Positive    |
 | = 0.8        | Дуже сильне перекриття — ймовірно, дублікат   |
 | = 1.0        | Рамки повністю збігаються                     |
 
 
-> **Правило:** IoU > 0.5 — «правильне» виявлення (True Positive). Саме цей поріг використовується у більшості задач.
+> **Важливо:** `IoU = 0.5` — це поширений приклад threshold (особливо в VOC-style оцінюванні), але конкретний поріг залежить від evaluation protocol. Наприклад, у COCO метрики усереднюються по діапазону **IoU = 0.50:0.95**.
 
 **Детальна схема IoU з числовим прикладом:**
 
@@ -1013,6 +1013,8 @@ REGION PROPOSALS → Fast R-CNN
 > **Головна ідея одним реченням:**
 > подивився на все зображення **один раз** → одразу сказав, **де об'єкти і що це за об'єкти**.
 
+> **Увага:** найближчий блок (S×S, `S × S × (B × 5 + C)`, `confidence = P(Object) × IoU`) описує саме **YOLOv1**. Це дуже корисна базова інтуїція, але її не можна буквально переносити на сучасні **YOLOv8/YOLOv9**, де head, таргети та loss суттєво відрізняються.
+
 Порівняй з Faster R-CNN:
 
 ```
@@ -1393,7 +1395,7 @@ H × W × (A × K)   ← ймовірності класів для кожног
 
 - Однакова архітектура (спільні ваги) на **всіх рівнях** FPN
 - Останній шар видає A×K значень (A — кількість якорів, K — кількість класів)
-- Активація — **sigmoid** (не softmax), бо класи **не взаємовиключні** (один об'єкт може бути і "dog" і "animal")
+- Активація — **sigmoid** (не softmax), бо в dense detection RetinaNet оцінює **незалежний score для кожного класу на кожному anchor**. Це не про таксономічні пари на кшталт "dog"+"animal", а про незалежне бінарне оцінювання класів у кожному anchor.
 
 **5. Box Regression Subnet (підмережа регресії)**
 
@@ -1904,6 +1906,8 @@ from ultralytics import YOLO  # Клас для завантаження і тр
 | 8   | machinery      | Техніка              |
 | 9   | vehicle        | Транспортний засіб   |
 
+> **Увага про індекси класів:** у цьому **custom dataset** `class 0 = Hardhat`. Це інша нумерація, ніж у COCO, де `class 0 = person`.
+
 
 ![Приклад застосування детектора на будмайданчику](images/yolo_detection_example.jpg)
 
@@ -2339,6 +2343,8 @@ plt.show()
 
 Перш ніж тренувати, перевіримо, як поводиться YOLOv9, навчений на COCO.
 
+> **Важливий warning:** у цьому блоці використовується **pretrained COCO модель**, тому `classes=[0]` означає саме **Person (COCO index)**. Під час тренування/інференсу на нашому датасеті індекси беруться з `data.yaml`, де `0 = Hardhat`.
+
 ```python
 # Завантажуємо попередньо навчену модель YOLOv9e
 # При першому запуску файл .pt автоматично завантажується з ultralytics servers
@@ -2369,7 +2375,7 @@ display_image(f'runs/detect/predict/{example_image_inference_output}')
 | Параметр   | Тип           | Значення     | Опис                                                           |
 | ---------- | ------------- | ------------ | -------------------------------------------------------------- |
 | `source`   | `str`         | шлях або URL | Вхідне зображення, відео або директорія                        |
-| `classes`  | `list[int]`   | `[0]`        | Яким класам відповідати (за індексами COCO); `None` = всі      |
+| `classes`  | `list[int]`   | `[0]`        | Яким класам відповідати (за індексами **поточної моделі**: тут COCO); `None` = всі |
 | `conf`     | `float`       | `0.30`       | Поріг впевненості; рамки нижче — відкидаються                  |
 | `device`   | `None`/`list` | `None`       | Пристрій для inference; `None` = CPU                           |
 | `imgsz`    | `tuple`       | `(640, 640)` | Розмір входу моделі (може відрізнятись від розміру зображення) |
@@ -2428,7 +2434,7 @@ model.train(
     amp=True,         # AMP (Automatic Mixed Precision): прискорює тренування на GPU
     exist_ok=True,    # Перезаписати директорію результатів, якщо вже існує
     resume=False,     # False = починати з нуля; True = продовжити з checkpoint
-    device=[0],       # [0] — перша GPU; [0, 1] — дві GPU; None — CPU
+    device=[0, 1],    # Kaggle T4 x2: використовувати обидві GPU; якщо одна GPU — постав [0]
     verbose=False,    # False — мінімальний вивід у консоль
 )
 ```
@@ -2444,8 +2450,14 @@ model.train(
 | `lrf`      | 0.01            | Коефіцієнт фінального lr (лінійний scheduler) |
 | `patience` | 20              | Early stopping                                |
 | `amp`      | `True`          | Mixed precision (FP16) — прискорення на GPU   |
-| `device`   | `[0]`           | Номер GPU; `None` = CPU                       |
+| `device`   | `[0, 1]`        | Kaggle T4 x2: обидві GPU; якщо одна GPU — `[0]`; `None` = CPU |
 | `resume`   | `False`         | Продовжити перерване тренування               |
+
+```python
+# Перевірити, скільки GPU бачить середовище (Kaggle/Colab)
+import torch
+print(torch.cuda.device_count())  # 2 для T4 x2, 1 для однієї GPU
+```
 
 
 **Де знайти результати тренування:**
@@ -2470,13 +2482,36 @@ runs/detect/
 
 > **Важливо для Kaggle:** `/kaggle/working` — **тимчасове сховище**. Після завершення або перезапуску сесії всі файли зникають. Якщо не зробити **Save Version** — `best.pt` буде втрачено.
 
-**Одразу після завершення тренування** — скопіюй ваги і збережи версію:
+**Нова клітинка одразу після `model.train(...)`:**
 
 ```python
-# Копіюємо best.pt у корінь /kaggle/working/ (для надійності)
-!cp runs/detect/yolov9e_ppe_css_70_epochs/weights/best.pt /kaggle/working/best.pt
-!cp runs/detect/yolov9e_ppe_css_70_epochs/weights/last.pt /kaggle/working/last.pt
-print("Ваги збережено!")
+import os
+import shutil
+
+run_dir = f"/kaggle/working/runs/detect/{CFG.BASE_MODEL}_{CFG.EXP_NAME}/weights"
+best_src = os.path.join(run_dir, "best.pt")
+last_src = os.path.join(run_dir, "last.pt")
+
+best_dst = "/kaggle/working/best.pt"
+last_dst = "/kaggle/working/last.pt"
+
+if not os.path.exists(best_src):
+    raise FileNotFoundError(f"best.pt not found: {best_src}")
+if not os.path.exists(last_src):
+    raise FileNotFoundError(f"last.pt not found: {last_src}")
+
+shutil.copy2(best_src, best_dst)
+shutil.copy2(last_src, last_dst)
+
+print("Saved:")
+print(best_dst)
+print(last_dst)
+```
+
+**Перевірка перед завершенням сесії:**
+```python
+!ls -lh /kaggle/working/*.pt
+!ls -lh /kaggle/working/*.onnx
 ```
 
 Потім: **File → Save Version** (або кнопка **Save** у правому верхньому куті) → ваги стануть постійним **output** версії і будуть доступні навіть після закриття браузера.
@@ -2486,13 +2521,18 @@ print("Ваги збережено!")
 2. Якщо версії немає — запусти тренування повторно (`exist_ok=True` збереже ті самі шляхи)
 3. Після завершення одразу зроби Save Version
 
+> `best.pt` потрібен для inference/export, а `last.pt` — для відновлення тренування (`resume=True`), якщо сесію обірвало.
+
 ---
 
 ### Збереження моделі у форматі ONNX
 
 ```python
 # Після тренування — завантажуємо найкращі ваги
-model = YOLO('runs/detect/yolov9e_ppe_css_70_epochs/weights/best.pt')
+# Kaggle:
+model = YOLO('/kaggle/working/best.pt')
+# Colab/локально (якщо не Kaggle):
+# model = YOLO(f'runs/detect/{CFG.BASE_MODEL}_{CFG.EXP_NAME}/weights/best.pt')
 
 # Експортуємо модель у формат ONNX
 model.export(
@@ -2504,6 +2544,79 @@ model.export(
     nms=False,       # False: NMS виконується поза ONNX (у постобробці)
 )
 ```
+
+### Що це за файли у `/kaggle/working`
+
+Після тренування та експорту ти бачиш:
+
+```text
+/kaggle/working/best.pt
+/kaggle/working/last.pt
+/kaggle/working/best.onnx
+```
+
+Це основні артефакти моделі:
+
+| Файл | Що всередині | Для чого потрібен |
+|---|---|---|
+| `best.pt` | PyTorch-ваги епохи з найкращим `val mAP` | Inference, валідація, експорт у ONNX |
+| `last.pt` | PyTorch-ваги останньої епохи (навіть якщо вона не найкраща) | Resume training (`resume=True`) після обриву сесії |
+| `best.onnx` | Експортована ONNX-модель (граф + ваги) | Деплой поза PyTorch: ONNX Runtime, TensorRT, OpenVINO, edge |
+
+> Чому `best.onnx` більший за `.pt` (наприклад, 220MB vs 112MB): ONNX зберігає обчислювальний граф у більш універсальному форматі, тому файл часто більший.
+
+---
+
+### Додаткові Kaggle-кроки: перевірка і zip-архів
+
+Щоб перевірити, що артефакти реально існують:
+
+```python
+!ls -lh /kaggle/working/*.pt
+!ls -lh /kaggle/working/*.onnx
+```
+
+Щоб зручно забрати все одним файлом:
+
+```python
+!zip -j /kaggle/working/yolo_models.zip \
+    /kaggle/working/best.pt \
+    /kaggle/working/last.pt \
+    /kaggle/working/best.onnx
+
+!ls -lh /kaggle/working/yolo_models.zip
+```
+
+**Що таке `yolo_models.zip`:**
+- один архів з усіма ключовими моделями після тренування;
+- зручно для завантаження на ноутбук, GitHub Releases, Google Drive;
+- зручно прикріплювати як output у Kaggle Version.
+
+> `-j` у команді `zip` означає "junk paths" — покласти файли в корінь архіву без довгих шляхів.
+
+---
+
+### Навіщо ці зміни саме для Kaggle
+
+На Kaggle сесія має тимчасову файлову систему. Поки сесія жива, файли є; після рестарту без `Save Version` вони зникають.
+
+Тому безпечний workflow:
+
+```text
+TRAIN
+  ↓
+best.pt + last.pt у runs/detect/...
+  ↓
+копія у /kaggle/working/
+  ↓
+export best.onnx
+  ↓
+перевірка ls + архів yolo_models.zip
+  ↓
+Save Version
+```
+
+Після `Save Version` ці файли стануть постійним output версії ноутбука.
 
 
 | Параметр   | Опис                 | Коли змінювати                                           |
@@ -2551,6 +2664,80 @@ PyTorch (навчання) → .pt → [model.export()] → .onnx → будь-�
   - **FPN** — піраміда ознак для виявлення об'єктів різних масштабів
   - **Focal Loss** — фокусує навчання на складних прикладах, а не на фоні
 - **Практика:** налаштування YOLOv9 на датасеті будівельного майданчика — 10 класів засобів безпеки.
+
+---
+
+## EXAM / REVISION CHEAT SHEET
+
+### 1) Велика картина: що таке Object Detection
+
+- **Object Detection** = класифікація (`що?`) + локалізація (`де?`).
+- Вихід моделі: набір `(bbox, class, score)` для кожного знайденого об'єкта.
+- Від класифікації відрізняється тим, що об'єктів може бути багато, і кожен має координати.
+
+### 2) One-stage vs Two-stage
+
+- **Two-stage (R-CNN family):** спочатку proposals, потім класифікація/регресія.
+  - Плюс: вища точність на складних сценах.
+  - Мінус: повільніше.
+- **One-stage (YOLO, RetinaNet):** один прохід, одразу bbox + класи.
+  - Плюс: швидкість, real-time.
+  - Мінус: складніше боротись з дисбалансом фон/об'єкт.
+
+### 3) Еволюція R-CNN (must know)
+
+- **R-CNN (2014):** Selective Search + CNN для кожного регіону + SVM + bbox regressor.
+- **Fast R-CNN (2015):** одна CNN на все зображення + ROI Pooling.
+- **Faster R-CNN (2015):** RPN замість Selective Search, end-to-end pipeline.
+- Ключова ідея еволюції: прибираємо дорогі зовнішні кроки та інтегруємо все в trainable мережу.
+
+### 4) YOLO: що саме пам'ятати
+
+- **YOLOv1 інтуїція:** сітка `S × S`, формат виходу `S × S × (B × 5 + C)`.
+- Для YOLOv1: `confidence = P(Object) × IoU`.
+- Після прогнозу застосовується **NMS** для видалення дублікатів.
+- **Важливо:** формули і структура YOLOv1 не тотожні сучасним YOLOv8/v9 (інші head/loss/assignments).
+
+### 5) RetinaNet: суть моделі
+
+- Backbone `ResNet` + `FPN` для multi-scale ознак.
+- Дві head-підмережі: classification subnet та box regression subnet.
+- Ключова інновація: **Focal Loss** для боротьби з дисбалансом (багато easy background).
+- **sigmoid** у classification head: незалежні оцінки класів для кожного anchor (а не softmax-нормалізація по класах).
+
+### 6) IoU, NMS, TP/FP/FN
+
+- `IoU = area(intersection) / area(union)`.
+- Більший IoU = кращий збіг передбаченої рамки з ground truth.
+- **NMS:** залишає найвпевненішу рамку, перекривні з нею (IoU > threshold) пригнічує.
+- Поріг IoU залежить від протоколу оцінювання, не є універсально фіксованим.
+
+### 7) Precision / Recall / AP / mAP
+
+- `Precision = TP / (TP + FP)` — наскільки "чисті" спрацювання.
+- `Recall = TP / (TP + FN)` — яку частку реальних об'єктів знайшли.
+- **AP** — площа під PR-кривою для одного класу.
+- **mAP** — середнє AP по класах (та інколи по кількох IoU-порогах).
+- **COCO main metric:** `mAP@0.50:0.95` (суворіший критерій за `mAP@0.5`).
+
+### 8) Метрики на практиці: як не помилитись в інтерпретації
+
+- Дивись не лише загальний mAP, а й **AP по класах** (особливо за дисбалансу даних).
+- Порівнюй моделі на однаковому evaluation protocol.
+- Відстежуй компроміс **speed vs accuracy** під конкретну задачу.
+
+### 9) Швидка логіка вибору моделі
+
+- Потрібен real-time: `YOLO-family`.
+- Потрібна максимальна точність: `Faster R-CNN` / сильні two-stage.
+- Сильний дисбаланс та багато фону: `RetinaNet (Focal Loss)`.
+
+### 10) Часта пастка з class indices
+
+- Індекси класів залежать від конкретного датасету/моделі.
+- Для pretrained COCO: `0 = person`.
+- Для цього custom dataset: `0 = Hardhat`.
+- Завжди звіряйся з `data.yaml` або label map перед фільтрацією `classes=[...]`.
 
 ---
 

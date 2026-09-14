@@ -6,3 +6,8 @@
 
 # macOS
 .DS_Store
+
+# YOLO training artifacts (large)
+тема_7/yolo_models/*.pt
+тема_7/yolo_models/*.onnx
+тема_7/yolo_models/*.zip
