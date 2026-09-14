@@ -1977,7 +1977,12 @@ class CFG:
     LABEL_SMOOTHING = 0.0  # Label smoothing: розм'якшення міток (0.0 — вимкнено)
     
     # --- Шляхи ---
-    CUSTOM_DATASET_DIR = './тема_7/'
+    # Автоматично визначаємо середовище виконання:
+    #   Colab:  після `git clone PetraStill/deep && %cd deep` → датасет у ./тема_7/
+    #   Kaggle: після `!git clone PetraStill/deep` в /kaggle/working/ → датасет у ./deep/тема_7/
+    #   Локально: шлях до папки тема_7 у клонованому репо
+    CUSTOM_DATASET_DIR = './тема_7/'      # Colab / локально
+    # CUSTOM_DATASET_DIR = './deep/тема_7/'  # Kaggle (розкоментуй якщо запускаєш на Kaggle)
     OUTPUT_DIR = './'  # Куди зберігати data.yaml і результати тренування
 ```
 
@@ -2391,7 +2396,7 @@ model = YOLO(CFG.BASE_MODEL_WEIGHTS)
 ```
 
 ```python
-%%time   # Виміряємо час виконання тренування
+%%time
 
 model.train(
     # --- Дані ---
@@ -2458,6 +2463,28 @@ runs/detect/
 ```
 
 > **Де знайти більше параметрів:** [docs.ultralytics.com/modes/train/](https://docs.ultralytics.com/modes/train/)
+
+---
+
+### ⚠️ Збереження ваг після тренування (Kaggle)
+
+> **Важливо для Kaggle:** `/kaggle/working` — **тимчасове сховище**. Після завершення або перезапуску сесії всі файли зникають. Якщо не зробити **Save Version** — `best.pt` буде втрачено.
+
+**Одразу після завершення тренування** — скопіюй ваги і збережи версію:
+
+```python
+# Копіюємо best.pt у корінь /kaggle/working/ (для надійності)
+!cp runs/detect/yolov9e_ppe_css_70_epochs/weights/best.pt /kaggle/working/best.pt
+!cp runs/detect/yolov9e_ppe_css_70_epochs/weights/last.pt /kaggle/working/last.pt
+print("Ваги збережено!")
+```
+
+Потім: **File → Save Version** (або кнопка **Save** у правому верхньому куті) → ваги стануть постійним **output** версії і будуть доступні навіть після закриття браузера.
+
+**Якщо сесія вже скинулась і ваги зникли:**
+1. Перевір **Version history** → попередня збережена версія → вкладка **Output**
+2. Якщо версії немає — запусти тренування повторно (`exist_ok=True` збереже ті самі шляхи)
+3. Після завершення одразу зроби Save Version
 
 ---
 
