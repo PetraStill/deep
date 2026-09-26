@@ -5,6 +5,14 @@
 тема_6/hw_intel_image_classification.ipynb
 тема_8/hw_indoor_object_detection.ipynb
 тема_8/dz-topic-8-chirkova-iraida-leonidivna.ipynb
+тема_10/hw_email_spam_detection.ipynb
+
+# Промпт для створення конспектів
+CONSPECTUS_PROMPT.md
+
+# Навчальні зображення в корені
+ROC_AUC.png
+precision_recall.png
 
 # macOS
 .DS_Store
