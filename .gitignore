@@ -1,6 +1,9 @@
 # Original full-resolution dataset (~1.1 GB) — use data_64/ instead
 тема_5/data/
 
+# Фінальний проєкт (здається окремо через Kaggle)
+фінальний_проєкт/
+
 # Домашнє завдання (здається окремо)
 тема_6/hw_intel_image_classification.ipynb
 тема_8/hw_indoor_object_detection.ipynb
